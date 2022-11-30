@@ -15,7 +15,7 @@ DATA_ROOT = '/home/zeh/data'
 
 
 def make_longtailed_imb(max_num, class_num, gamma):
-    mu = np.power(1/gamma, 1/(class_num - 1))  # 对1/gamma元素求1/(class_num - 1)次方
+    mu = np.power(1/gamma, 1/(class_num - 1))  
     print(mu)
     class_num_list = []
     for i in range(class_num):
@@ -49,7 +49,7 @@ def get_val_test_data(dataset, num_sample_per_class, shuffle=False, random_seed=
             test_list.append(index)
             num_sample_per_class[label] -= 1
 
-    return val_list, test_list  # 每个测试集的类选100个作为验证集，生于的900个作为测试集，返回对应的索引
+    return val_list, test_list 
 
 
 def get_oversampled_data(dataset, num_sample_per_class, random_seed=0):
@@ -116,10 +116,8 @@ def get_oversampled(dataset, num_sample_per_class, batch_size, TF_train, TF_test
 
     imbal_class_counts = [int(i) for i in num_sample_per_class]
     class_indices = [np.where(targets == i)[0] for i in range(nb_classes)]
-    # class_indices由10个列表组成，第i个列表记录第i类在targets中对应的索引值，所以每一个列表的长度为5000
-    # imbal_class_indices 即根据不平衡类的数量在原始数据集（cifar_10）中抽取相应类的数量，从前至后抽取
     imbal_class_indices = [class_idx[:class_count] for class_idx, class_count in zip(class_indices, imbal_class_counts)]
-    imbal_class_indices = np.hstack(imbal_class_indices)  # np.hstack将数据集按水平方向拼接一起
+    imbal_class_indices = np.hstack(imbal_class_indices)
 
     train_cifar.targets = targets[imbal_class_indices]
     train_cifar.data = train_cifar.data[imbal_class_indices]
@@ -157,11 +155,10 @@ def get_imbalanced(dataset, num_sample_per_class, batch_size, TF_train, TF_test)
         raise NotImplementedError()
 
     train_cifar = dataset_(root=DATA_ROOT, train=True, download=True, transform=TF_train)
-    train_in_idx = get_imbalanced_data(train_cifar, num_sample_per_class)  # 返回需要采样样本的索引。
+    train_in_idx = get_imbalanced_data(train_cifar, num_sample_per_class) 
     imbalanced_train_loader = torch.utils.data.DataLoader(train_cifar, batch_size=batch_size, num_workers=8)
     train_in_loader = torch.utils.data.DataLoader(train_cifar, batch_size=batch_size,
                                                   sampler=SubsetRandomSampler(train_in_idx), num_workers=8)
-    # SubsetRandomSampler(indices)：无放回地按照给定的索引列表采样样本元素，即第一类采样5000个，第二类采样2997个，第三类采样1077个，以此类推
     ds.append(imbalanced_train_loader)
     ds.append(train_in_loader)
 
