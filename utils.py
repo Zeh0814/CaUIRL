@@ -110,7 +110,7 @@ class InputNormalize(nn.Module):
         self.register_buffer("new_std", new_std)
 
     def forward(self, x):
-        x = torch.clamp(x, 0, 1)  # clamp（）函数的功能将输入input张量每个元素的值压缩到区间 [min,max]，并返回结果到一个新张量
+        x = torch.clamp(x, 0, 1) 
         x_normalized = (x - self.new_mean) / self.new_std
         return x_normalized
 
