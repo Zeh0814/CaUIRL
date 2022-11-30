@@ -34,7 +34,7 @@ elif ARGS.model == 'wideresnet':
 
 checkpoint = torch.load(ARGS.resume)
 cnn = cnn.cuda()
-cnn.load_state_dict(checkpoint['state_dict_model'])  # 用于将预训练的参数权重加载到新的模型之中
+cnn.load_state_dict(checkpoint['state_dict_model'])  
 criterion = nn.CrossEntropyLoss().cuda()
 cnn_optimizer = torch.optim.SGD(cnn.parameters(), lr=ARGS.lr, momentum=0.9,
                                 nesterov=True, weight_decay=ARGS.weight_decay)
@@ -98,7 +98,7 @@ def adjust_learning_rate(optimizer, lr_init, epoch):
     """decrease the learning rate at 160 and 180 epoch ( from LDAM-DRW, NeurIPS19 )"""
     lr = lr_init
 
-    if epoch >= 0:  # 在epoch=160和180的时候，分别将学习率衰减100倍
+    if epoch >= 0: 
         lr /= 100
     if epoch >= 20:
         lr /= 100
@@ -111,7 +111,7 @@ def adjust_learning_rate_stage1(optimizer, lr_init, epoch):
     """decrease the learning rate at 160 and 180 epoch ( from LDAM-DRW, NeurIPS19 )"""
     lr = lr_init
 
-    if epoch < 5:  # 前五个epoch采用‘linear warm-up’的学习策略
+    if epoch < 5: 
         lr = (epoch + 1) * lr_init / 5
 
     for param_group in optimizer.param_groups:
