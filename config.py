@@ -118,12 +118,12 @@ test_transform = transforms.Compose([
 
 if ARGS.dataset == 'cifar10':
     num_classes = 10
-    train_dataset = datasets.CIFAR10(root='/home/zeh/data',
+    train_dataset = datasets.CIFAR10(root='./data',
                                      train=True,
                                      transform=train_transform,
                                      download=True)
 
-    test_dataset = datasets.CIFAR10(root='/home/zeh/data',
+    test_dataset = datasets.CIFAR10(root='./data',
                                     train=False,
                                     transform=test_transform,
                                     download=True)
@@ -157,15 +157,14 @@ normalizer = InputNormalize(mean, std).to(device)
 # Data Loader
 N_SAMPLES_PER_CLASS_BASE = [int(N_SAMPLES)] * N_CLASSES
 if ARGS.imb_type == 'longtail':
-    N_SAMPLES_PER_CLASS_BASE = make_longtailed_imb(N_SAMPLES, N_CLASSES, ARGS.ratio)  # 构造长尾数据中每个类的样本个数
+    N_SAMPLES_PER_CLASS_BASE = make_longtailed_imb(N_SAMPLES, N_CLASSES, ARGS.ratio)  
 elif ARGS.imb_type == 'step':
     for i in range(ARGS.imb_start, N_CLASSES):
         N_SAMPLES_PER_CLASS_BASE[i] = int(N_SAMPLES * (1 / ARGS.ratio))
 
-N_SAMPLES_PER_CLASS_BASE = tuple(N_SAMPLES_PER_CLASS_BASE)  # 将列表转化为元组，元组中的元素不能改变
+N_SAMPLES_PER_CLASS_BASE = tuple(N_SAMPLES_PER_CLASS_BASE)
 print(N_SAMPLES_PER_CLASS_BASE)
 
-# 获得不平衡数据，train_loader是不平衡的，val_loader和test_loader是平衡的数据集
 imbalanced_train_loader, train_loader, val_loader, test_loader = get_imbalanced(DATASET, N_SAMPLES_PER_CLASS_BASE,
                                                                                 BATCH_SIZE, train_transform,
                                                                                 test_transform)
@@ -177,7 +176,7 @@ if ARGS.over and ARGS.effect_over:
     print(N_SAMPLES_PER_CLASS)
 else:
     N_SAMPLES_PER_CLASS = N_SAMPLES_PER_CLASS_BASE
-N_SAMPLES_PER_CLASS_T = torch.Tensor(N_SAMPLES_PER_CLASS).to(device)  # 将列表转化为张量的形式
+N_SAMPLES_PER_CLASS_T = torch.Tensor(N_SAMPLES_PER_CLASS).to(device) 
 
 
 def evaluate(net, dataloader, epoch, fea_test_list, logger=None):
@@ -205,24 +204,24 @@ def evaluate(net, dataloader, epoch, fea_test_list, logger=None):
         correct += sum_t(correct_mask)
 
         # For accuracy of minority / majority classes.
-        major1_mask = targets < (N_CLASSES // 5)  # 前两类（0，1）记为大类major1_classes
+        major1_mask = targets < (N_CLASSES // 5)  
         major1_total += sum_t(major1_mask)
         major1_correct += sum_t(correct_mask * major1_mask)
 
-        major2_mask = ((N_CLASSES // 5) <= targets) & (targets < 2 * (N_CLASSES // 5))  # 第2,3类记为大类major2_classes
+        major2_mask = ((N_CLASSES // 5) <= targets) & (targets < 2 * (N_CLASSES // 5)) 
         major2_total += sum_t(major2_mask)
         major2_correct += sum_t(correct_mask * major2_mask)
 
-        minor2_mask = targets >= (N_CLASSES - (N_CLASSES // 5))   # 最后两类（8，9）记为小类minor2_classes
+        minor2_mask = targets >= (N_CLASSES - (N_CLASSES // 5))  
         minor2_total += sum_t(minor2_mask)
         minor2_correct += sum_t(correct_mask * minor2_mask)
 
-        # 第（6，7）记为小类minor1_classes
+
         minor1_mask = (3 * (N_CLASSES // 5) <= targets) & (targets < (N_CLASSES - (N_CLASSES // 5)))
         minor1_total += sum_t(minor1_mask)
         minor1_correct += sum_t(correct_mask * minor1_mask)
 
-        # 既不属于major_classes也不属于minor_classes的类记为中型类即
+
         neutral_mask = ~(major1_mask + major2_mask + minor1_mask + minor2_mask)
         neutral_total += sum_t(neutral_mask)
         neutral_correct += sum_t(correct_mask * neutral_mask)
@@ -340,13 +339,13 @@ def create_logger_stage1(cfg_name):
 def mixup_data(x, y, alpha=1.0, use_cuda=True):
     # Returns mixed inputs, pairs of targets, and lambda
     if alpha > 0:
-        lam = np.random.beta(alpha, alpha)   # 贝塔分布
+        lam = np.random.beta(alpha, alpha) 
     else:
         lam = 1
 
     batch_size = x.size()[0]
     if use_cuda:
-        index = torch.randperm(batch_size).cuda()  # 输出为是把1到batch_size这些数随机打乱得到的一个数字序列
+        index = torch.randperm(batch_size).cuda()  
     else:
         index = torch.randperm(batch_size)
 
@@ -359,7 +358,7 @@ def mixup_data(x, y, alpha=1.0, use_cuda=True):
 def mixup_data_x(x, y, alpha=1.0, use_cuda=True):
     # Returns mixed inputs, pairs of targets, and lambda
     if alpha > 0:
-        lam = np.random.beta(alpha, alpha)   # 贝塔分布
+        lam = np.random.beta(alpha, alpha)  
     else:
         lam = 1
 
@@ -370,60 +369,4 @@ def mixup_data_x(x, y, alpha=1.0, use_cuda=True):
 
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
-
-
-
-# imagenet_dataset = torchvision.datasets.ImageFolder(
-#     root='/home/zeh/Data/ImageNet/data/ImageNet2012/ILSVRC2012_img_train',
-#     transform=data_transform)
-# # 将数据集的标签和对应图片的位置加载为字典的形式
-# imagenet_dataset_images = imagenet_dataset.imgs
-# imagenet_dataset_targets = imagenet_dataset.targets
-# imagenet_dataset_targets = {}.fromkeys(imagenet_dataset_targets).keys()
-# UNIVERSUM_DATA_DICT = {i: [] for i in list(imagenet_dataset_targets)}
-# for image in imagenet_dataset_images:
-#     label = image[1]
-#     UNIVERSUM_DATA_DICT[int(label)].append(image[0])
-#
-# tinyimagenet_dataset = torchvision.datasets.ImageFolder(
-#     root='/home/zeh/Data/tiny-imagenet-200/train',
-#     transform=data_transform)
-# # 将数据集的标签和对应图片的位置加载为字典的形式
-# tinyimagenet_dataset_images = tinyimagenet_dataset.imgs
-# tinyimagenet_dataset_targets = tinyimagenet_dataset.targets
-# tinyimagenet_dataset_targets = {}.fromkeys(tinyimagenet_dataset_targets).keys()
-# UNIVERSUM_DATA_DICT_Tiny = {i: [] for i in list(tinyimagenet_dataset_targets)}
-# for image in tinyimagenet_dataset_images:
-#     label = image[1]
-#     UNIVERSUM_DATA_DICT_Tiny[int(label)].append(image[0])
-
-# universum_transform = transforms.Compose([
-#     transforms.RandomCrop(32, padding=4),
-#     transforms.RandomHorizontalFlip(p=0.5),
-#     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
-#     transforms.RandomGrayscale(p=0.2),
-#     # GaussianBlur(kernel_size=int(0.1 * 32)),
-#     transforms.ToTensor(),
-#     transforms.Normalize(
-#         mean=[0.4377, 0.4438, 0.4728],
-#         std=[0.1201, 0.1231, 0.1052]),
-#     Cutout(n_holes=ARGS.n_holes, length=ARGS.length)
-#     ])
-#
-# universum_dataset = torchvision.datasets.SVHN(
-#     root='/home/zeh/Data/SVHN',
-#     split='train',
-#     download=True,
-#     transform=torchvision.transforms.ToTensor()
-# )
-# universum_loader = torch.utils.data.DataLoader(
-#         universum_dataset, batch_size=256, shuffle=False, num_workers=0,
-#         pin_memory=True)
-# labels_num = list(set(universum_loader.dataset.labels))
-# UNIVERSUM_DATA_DICT = {i: [] for i in labels_num}
-# for datasets, labels in universum_loader:
-#     for i in range(len(datasets)):
-#         UNIVERSUM_DATA_DICT[int(labels[i])].append(datasets[i])
-
-
 
