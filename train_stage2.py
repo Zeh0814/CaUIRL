@@ -140,7 +140,7 @@ for epoch in range(ARGS.epochs):
         labels = labels.cuda()
         adjust_learning_rate(cnn_optimizer, LR, epoch)
 
-        # images, noise_mask = universum_rebalance_inputs(images, labels)
+        images, noise_mask = universum_rebalance_inputs(images, labels)
         cnn.zero_grad()
         pred, fea_train = cnn(images, mask=noise_mask)
         if epoch == 0:
